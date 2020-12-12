@@ -4,6 +4,8 @@ import sys
 
 
 TOKEN = os.getenv("GH_TOKEN")
+# REPORT_PROGRESS controls after how many PRs % of totall processed will be printed out 
+REPORT_PROGRESS = 25
 
 
 def main():
@@ -57,9 +59,10 @@ def process_pr_data(paginated_gh_result: PaginatedList):
         ]
         rows.append(row)
         processed_prs += 1
-        if (processed_prs % 100) == 0:
+        if (processed_prs % REPORT_PROGRESS) == 0:
             perc_progress = round(processed_prs / total * 100, 2)
             print(f"Processed {perc_progress} % of PRs")
+    print("Processed 100 % of PRs")
     return rows
 
 
