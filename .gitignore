@@ -1,5 +1,4 @@
 __pycache__
 .env
 secrets
-*.csv
 .ipynb_checkpoints
