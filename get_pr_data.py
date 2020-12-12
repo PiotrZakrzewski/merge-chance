@@ -1,12 +1,13 @@
 from github import Github, PaginatedList
 import os
 import sys
+from datetime import datetime
 
 
 TOKEN = os.getenv("GH_TOKEN")
 # REPORT_PROGRESS controls after how many PRs % of totall processed will be printed out 
 REPORT_PROGRESS = 25
-
+EXTRACTION_TS = datetime.now().timestamp()
 
 def main():
     if not TOKEN:
@@ -21,7 +22,7 @@ def main():
     g = Github(TOKEN)
     target_repo_id = sys.argv[1]
     target_repo = g.get_repo(target_repo_id)
-    csv_data = [["state", "created_at", "merged", "merge_date", "no_comments"]]
+    csv_data = [["state", "created_at", "merged", "merge_date", "no_comments", "extracted_at"]]
 
     open_prs = target_repo.get_pulls()
     print("Will process open PRs ..")
@@ -56,6 +57,7 @@ def process_pr_data(paginated_gh_result: PaginatedList):
             f"{pr.merged}",
             f"{merged_at}",
             f"{pr.comments}",
+            f"{EXTRACTION_TS}",
         ]
         rows.append(row)
         processed_prs += 1
