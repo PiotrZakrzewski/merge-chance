@@ -1,1 +1,4 @@
+jupyter==1.0.0
+numpy==1.19.4
+pandas==1.1.5
 PyGithub==1.54
