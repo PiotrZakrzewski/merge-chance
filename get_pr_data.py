@@ -7,7 +7,6 @@ from datetime import datetime
 TOKEN = os.getenv("GH_TOKEN")
 # REPORT_PROGRESS controls after how many PRs % of totall processed will be printed out 
 REPORT_PROGRESS = 25
-EXTRACTION_TS = datetime.now().timestamp()
 
 def main():
     if not TOKEN:
@@ -51,13 +50,14 @@ def process_pr_data(paginated_gh_result: PaginatedList):
     for pr in paginated_gh_result:
         created_at = pr.created_at.timestamp() if pr.created_at else "N/A"
         merged_at = pr.merged_at.timestamp() if pr.merged_at else "N/A"
+        extracted_at = datetime.now().timestamp()
         row = [
             pr.state,
             f"{created_at}",
             f"{pr.merged}",
             f"{merged_at}",
             f"{pr.comments}",
-            f"{EXTRACTION_TS}",
+            f"{extracted_at}",
         ]
         rows.append(row)
         processed_prs += 1
