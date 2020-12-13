@@ -39,7 +39,7 @@ def main():
     with open(csv_name, "w") as outfile:
         lines = [",".join(row) for row in csv_data]
         text = "\n".join(lines)
-        outfile.write(text)
+        outfile.write(text + "\n")
 
 
 def process_pr_data(paginated_gh_result: PaginatedList):
