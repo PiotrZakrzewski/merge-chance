@@ -79,7 +79,6 @@ def _process_pr_data(paginated_gh_result: PaginatedList, rows, resume_ind = 0):
             print(f"Processed {perc_progress} % of PRs")
 
     print("Processed 100 % of PRs")
-    return rows
 
 if __name__ == "__main__":
     main()
