@@ -30,7 +30,10 @@ def classify_pr(pr_stats):
 
 pr_class = data.apply(classify_pr, axis=1)
 data = data.assign(PR=pr_class)
-plot = sns.countplot(data=data, x="PR").get_figure()
+plot_order = ["Successful", "Rejected", "Stale", "Active"]
+plot = sns.countplot(
+    data=data, x="PR", palette="colorblind", order=plot_order
+).get_figure()
 
 repo_name = os.path.basename(path)
 if repo_name.endswith(".csv"):
