@@ -19,9 +19,7 @@ def main():
             "Pass github repo name as first position argument.\n 'facebook/react' for example"
         )
         sys.exit(1)
-
-    owner = sys.argv[1]
-    repo = sys.argv[2]
+    owner, repo = sys.argv[1].split('/')
     first_resp = first_query(owner, repo)
     total = first_resp["data"]["repository"]["pullRequests"]["totalCount"]
     has_next = first_resp["data"]["repository"]["pullRequests"]["pageInfo"][

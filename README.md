@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 run the script
 ```shell
-GH_TOKEN=YOUR_GH_TOKEN python get_pr_gql.py ORG REPO
+GH_TOKEN=YOUR_GH_TOKEN python get_pr_gql.py ORG/REPO
 ```
 Make a score plot
 ```shell
