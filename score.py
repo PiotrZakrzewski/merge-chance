@@ -4,12 +4,20 @@ import pandas as pd
 import seaborn as sns
 
 STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
+
 if len(sys.argv) < 2:
     print("Path to a csv required as the first argument")
     sys.exit(1)
+OUTSIDER_ONLY = False
+if len(sys.argv) == 3:
+    OUTSIDER_ONLY = sys.argv[2] == "--outsiders"
+
 path = sys.argv[1]
 data = pd.read_csv(path)
 
+if OUTSIDER_ONLY:
+    data = data.drop(data[data['author'] == "MEMBER"].index)
+    data = data.drop(data[data['author'] == "OWNER"].index)
 
 def is_stale(created, extracted):
     return (extracted - created) > STALE_THRESHOLD

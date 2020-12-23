@@ -17,7 +17,10 @@ Make a score plot
 ```shell
 python score.py org_repo.csv
 ```
-
+or if you want to plot only outsider contributions (author affiliation other than MEMBER or OWNER) do:
+```shell
+python score.py org_repo.csv --outsiders
+```
 ## What is in the other directories?
 - exploration contains a simple analysis of one repository
 - gh-rest-api contains my old script for fetching the same data with REST-api (slooow)
