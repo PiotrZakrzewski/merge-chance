@@ -24,9 +24,9 @@ def is_stale(created, extracted):
 
 
 def classify_pr(pr_stats):
-    if pr_stats["merged"] and pr_stats["state"] == "MERGED":
+    if pr_stats["state"] == "MERGED":
         return "Successful"
-    elif not pr_stats["merged"] and pr_stats["state"] == "CLOSED":
+    elif pr_stats["state"] == "CLOSED":
         return "Rejected"
     elif pr_stats["state"] == "OPEN" and is_stale(
         pr_stats["created_at"], pr_stats["extracted_at"]

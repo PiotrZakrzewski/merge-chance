@@ -27,7 +27,7 @@ def main():
     ]
     cursor = first_resp["data"]["repository"]["pullRequests"]["edges"][-1]["cursor"]
     print(f"Total PRs to process {total}.")
-    rows = [["state", "created_at", "merged", "extracted_at", "author"]]
+    rows = [["state", "created_at", "extracted_at", "author"]]
     to_csv(first_resp, rows)
     while has_next:
         progress = round(len(rows) / total * 100, 2)
@@ -62,7 +62,6 @@ def first_query(owner, repo):
           node {
             state
             createdAt
-            merged
             authorAssociation
           }
         }
@@ -90,7 +89,6 @@ def paginated_query(owner, repo, cursor):
           node {
             state
             createdAt
-            merged
             authorAssociation
           }
         }
@@ -117,7 +115,7 @@ def to_csv(gql_result, rows: list):
         # parse to ts
         created_at = parser.parse(created_at).timestamp()
         author = node["authorAssociation"]
-        row = [node["state"], str(created_at), str(node["merged"]), str(extracted_at), author]
+        row = [node["state"], str(created_at), str(extracted_at), author]
         rows.append(row)
 
 
