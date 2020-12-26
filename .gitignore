@@ -2,3 +2,4 @@ __pycache__
 .env
 secrets
 .ipynb_checkpoints
+.DS_STORE
