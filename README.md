@@ -24,3 +24,4 @@ python score.py org_repo.csv --outsiders
 ## What is in the other directories?
 - exploration contains a simple analysis of one repository
 - gh-rest-api contains my old script for fetching the same data with REST-api (slooow)
+- gcp, Cloud Run Images for running the ETL process in the Cloud (Cloud Run -> Big Query)
