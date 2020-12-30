@@ -8,6 +8,7 @@ python -m venv .env
 source .env/bin/activate
 pip install -r requirements.txt
 ```
+You will need a GitHub token, [instructions](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token).
 
 run the script
 ```shell
