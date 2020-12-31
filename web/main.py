@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, render_template
 import requests as rq
 import os
 import sys
@@ -12,6 +12,10 @@ TOKEN = os.getenv("GH_TOKEN")
 STEP_SIZE = 100 # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
 
+
+@app.route("/ind", methods=["GET"])
+def bla():
+    return render_template("index.html")
 
 @app.route("/", methods=["GET"])
 def index():
