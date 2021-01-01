@@ -1,15 +1,35 @@
 <!doctype html>
-<title> Merge Chance </title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Merge Chance </title>
+<link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css">
+<link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/grids-responsive-min.css">
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<nav>
-  <h1> How many PRs get merged in the end?</h1>
-  <i>Type in the repo name including the owner. e.g: JuliaLang/Julia</i>
-  <i>case-insensitive </i>
+</head>
+<body>
+  <div>
+    <div class="pure-g">
+       <h1 class="pure-u-2-3" > Will your PR get merged? </h1>
+    </div>
+    <div class="pure-g">
+      <a class="pure-u-2-3" > Type in the repo name including the owner. e.g: JuliaLang/Julia </a>
+    </div>
+    <div class="pure-g">
+      <i class="pure-u-1-3" > (case-insensitive) </i>
+    </div>
+    <br/>
+    <div class="pure-g">
+      <input class="pure-input-1" id="target" type="text" placeholder="JuliaLang/julia" tabindex="1">
+      <button id="check" class="pure-button pure-button-primary" onclick="handleTarget()"> Check </button>  
+    </div>
+  </div>
   <br/>
-  <input id="target" type="text" placeholder="JuliaLang/julia" tabindex="1">
-  <button onclick="handleTarget()"> Check </button>
-</nav>
+  <hr/>
+  <footer>
+    <p><i>By Piotr Zakrzewski 2021 </i></p>
+    <a href="https://twitter.com/pmzakrzewski?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @pmzakrzewski</a>
+  </footer>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
@@ -17,7 +37,12 @@
     const target = document.getElementById('target').value;
     window.location.href = `/target?repo=${target}`
   }
-  $(function() {
+  $("#target").keyup((event) => {
+    if (event.keyCode === 13) {
+        $("#check").click();
+    }
+});
+  $(() => {
     fetch("/autocomplete").then( (source) => {
       source.json().then((repos) => {
         $("#target").autocomplete({
@@ -27,3 +52,4 @@
     });
   });
 </script>
+</body>
