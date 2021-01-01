@@ -1,5 +1,8 @@
 # How Likely Is Your OSS Contribution to Succeed
-Use this script to calculate the proportion of PRs that get a response, get merged or rejected.
+
+__Check Merge Chance for a public GitHub Repo [here](https://merge-chance.info)__
+
+Or use `get_pr_gql.py` script from this repo for more control and data.
 
 Requires python 3.6+
 Prepare a venv
@@ -23,6 +26,6 @@ or if you want to plot only outsider contributions (author affiliation other tha
 python score.py org_repo.csv --outsiders
 ```
 ## What is in the other directories?
-- exploration contains a simple analysis of one repository
-- gh-rest-api contains my old script for fetching the same data with REST-api (slooow)
-- gcp, Cloud Run Images for running the ETL process in the Cloud (Cloud Run -> Big Query)
+- `web` merge-chance.info code
+- `exploration` contains a simple analysis of one repository
+- `gh-rest-api` contains my old script for fetching the same data with REST-api (slooow)
