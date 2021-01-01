@@ -3,7 +3,15 @@ import requests as rq
 import os
 import sys
 import logging
+import time
+from firebase_admin import credentials, firestore, initialize_app
 
+
+# Initialize Firestore DB
+cred = credentials.Certificate('key.json')
+default_app = initialize_app(cred)
+db = firestore.client()
+cache_ref = db.collection('cache')
 app = Flask(__name__)
 
 log = logging.getLogger(__name__)
@@ -11,6 +19,7 @@ log = logging.getLogger(__name__)
 TOKEN = os.getenv("GH_TOKEN")
 STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
+TTL = 24 * 60 * 60 # A day in seconds
 
 
 @app.route("/", methods=["GET"])
@@ -26,13 +35,44 @@ def target():
     target = request.args.get("repo")
     if not target or "/" not in target:
         return ("No such repository on GitHub", 404)
-    owner, repo = target.split("/")
-    _, succ, fail = get_stats(owner, repo)
-    chance = succ / (fail + succ)
-    chance = chance * 100
-    chance = round(chance, 2)
+    chance = get_from_cache(target)
+    if chance:
+        log.info(f"Retrieved {target} from cache")
+    else:
+        log.info(f"Retrieving {target} from GH API")
+        owner, repo = target.split("/")
+        _, succ, fail = get_stats(owner, repo)
+        chance = succ / (fail + succ)
+        chance = chance * 100
+        chance = round(chance, 2)
+        cache(target, chance)
     return render_template("chance.html", chance=chance, repo=target)
 
+
+def escape_fb_key(repo_target):
+    return repo_target.replace("/", "_")
+
+
+def get_from_cache(repo):
+    repo = escape_fb_key(repo)
+    try:
+        cached = cache_ref.document(repo).get().to_dict()
+        if not cached:
+          return None
+        age = time.time() - cached["ts"]
+        if age < TTL:
+            return cached["chance"]
+        return None
+    except Exception as e:
+        log.critical(f"An error occured ruing retrieving cache: {e}")
+
+def cache(repo, chance):
+    repo = escape_fb_key(repo)
+    try:
+        ts = time.time()
+        cache_ref.document(repo).set({"chance": chance, "ts": ts})
+    except Exception as e:
+        log.critical(f"An error occured during caching: {e}")
 
 def calc_chance(stats):
     """Returns total_merged taken into account, outsiders_merged and insiders_merged."""
@@ -87,7 +127,6 @@ def first_query(owner, repo):
           node {
             state
             authorAssociation
-            number
           }
         }
       }
@@ -114,7 +153,6 @@ def paginated_query(owner, repo, cursor):
           node {
             state
             authorAssociation
-            number
           }
         }
       }

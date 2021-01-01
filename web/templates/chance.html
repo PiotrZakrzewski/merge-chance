@@ -1,0 +1,8 @@
+<!doctype html>
+<title> Your Merge Chance on GitHub </title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1> {{repo}}</h1>
+  <h2> Outsiders' PRs get merged: {{chance}} % of the time</h2>
+  <span> Based on a sample of most recent PRs done by users not affiliated with the repo owner </span>
+</nav>
