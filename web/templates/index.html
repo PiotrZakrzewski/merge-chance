@@ -1,14 +1,29 @@
 <!doctype html>
 <title> Merge Chance </title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <nav>
-  <h1> Check % of merged PRs</h1>
-  <input id="target-repo" type="text" placeholder="JuliaLang/julia">
+  <h1> How many PRs get merged in the end?</h1>
+  <i>Type in the repo name including the owner. e.g: JuliaLang/Julia</i>
+  <i>case-insensitive </i>
+  <br/>
+  <input id="target" type="text" placeholder="JuliaLang/julia" tabindex="1">
   <button onclick="handleTarget()"> Check </button>
 </nav>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
   function handleTarget() {
-    const target = document.getElementById('target-repo').value;
+    const target = document.getElementById('target').value;
     window.location.href = `/target?repo=${target}`
   }
+  $(function() {
+    fetch("/autocomplete").then( (source) => {
+      source.json().then((repos) => {
+        $("#target").autocomplete({
+          source: repos,
+        });
+      });
+    });
+  });
 </script>

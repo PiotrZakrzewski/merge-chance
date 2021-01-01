@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import requests as rq
 import os
 import sys
@@ -24,6 +24,13 @@ TTL = 24 * 60 * 60 # A day in seconds
 class GQLError(Exception):
     pass
 
+@app.route("/autocomplete", methods=["GET"])
+def auto_complete():
+    data = cache_ref.order_by('ts', direction=firestore.Query.DESCENDING).limit(500).get()
+    repo_names = [repo.to_dict()["name"] for repo in data]
+    return jsonify(repo_names)
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
@@ -35,6 +42,7 @@ def target():
         print("You need to set GH_TOKEN env var")
         sys.exit(1)
     target = request.args.get("repo")
+    target = target.lower()
     if not target or "/" not in target:
         return ("No such repository on GitHub", 404)
     chance = get_from_cache(target)
@@ -72,10 +80,10 @@ def get_from_cache(repo):
         log.critical(f"An error occured ruing retrieving cache: {e}")
 
 def cache(repo, chance):
-    repo = escape_fb_key(repo)
+    escaped_repo = escape_fb_key(repo)
     try:
         ts = time.time()
-        cache_ref.document(repo).set({"chance": chance, "ts": ts})
+        cache_ref.document(escaped_repo).set({"chance": chance, "ts": ts, "name":repo})
     except Exception as e:
         log.critical(f"An error occured during caching: {e}")
 
