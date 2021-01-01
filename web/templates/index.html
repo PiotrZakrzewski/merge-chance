@@ -1,6 +1,14 @@
 <!doctype html>
-<title> Your Merge Chance on GitHub </title>
+<title> Merge Chance </title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <nav>
-  <h1>Get stats for a GitHub repo </h1>
+  <h1> Check % of merged PRs</h1>
+  <input id="target-repo" type="text" placeholder="JuliaLang/julia">
+  <button onclick="handleTarget()"> Check </button>
 </nav>
+<script>
+  function handleTarget() {
+    const target = document.getElementById('target-repo').value;
+    window.location.href = `/target?repo=${target}`
+  }
+</script>

@@ -9,30 +9,34 @@ app = Flask(__name__)
 log = logging.getLogger(__name__)
 
 TOKEN = os.getenv("GH_TOKEN")
-STEP_SIZE = 100 # 100 is Max
+STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
 
 
-@app.route("/ind", methods=["GET"])
-def bla():
-    return render_template("index.html")
-
 @app.route("/", methods=["GET"])
 def index():
+    return render_template("index.html")
+
+
+@app.route("/target", methods=["GET"])
+def target():
     if not TOKEN:
         print("You need to set GH_TOKEN env var")
         sys.exit(1)
     target = request.args.get("repo")
-    if not target or '/' not in target:
+    if not target or "/" not in target:
         return ("No such repository on GitHub", 404)
     owner, repo = target.split("/")
-    total, outsiders, insiders = get_stats(owner, repo)
-    
-    return (f"total: {total}, outsiders: {outsiders}, insiders: {insiders}", 200)
+    _, succ, fail = get_stats(owner, repo)
+    chance = succ / (fail + succ)
+    chance = chance * 100
+    chance = round(chance, 2)
+    return render_template("chance.html", chance=chance, repo=target)
+
 
 def calc_chance(stats):
     """Returns total_merged taken into account, outsiders_merged and insiders_merged."""
-    total, outsiders, insiders = 0,0,0
+    total, out_s, out_f = 0, 0, 0
     for edge in stats["data"]["repository"]["pullRequests"]["edges"]:
         node = edge["node"]
         author = node["authorAssociation"]
@@ -40,32 +44,32 @@ def calc_chance(stats):
         if state == "OPEN":
             continue
         total += 1
-        if state == "MERGED" and author in {'OWNER', 'MEMBER'}:
-            insiders += 1
-        elif state == "MERGED":
-            outsiders += 1
-    return total, outsiders, insiders
+        if author in {"OWNER", "MEMBER"}:
+            continue
+        if state == "MERGED":
+            out_s += 1
+        else:
+            out_f += 1
+    return total, out_s, out_f
 
 
 def get_stats(owner, repo):
     result = first_query(owner, repo)
-    total, outsiders, insiders = calc_chance(result)
+    total, succ, fail = calc_chance(result)
     has_next = result["data"]["repository"]["pullRequests"]["pageInfo"][
-            "hasPreviousPage"
-        ]
+        "hasPreviousPage"
+    ]
     while total < 100 and has_next:
-        cursor = result["data"]["repository"]["pullRequests"]["pageInfo"][
-            "startCursor"
-        ]
+        cursor = result["data"]["repository"]["pullRequests"]["pageInfo"]["startCursor"]
         result = paginated_query(owner, repo, cursor)
         has_next = result["data"]["repository"]["pullRequests"]["pageInfo"][
             "hasPreviousPage"
         ]
-        add_total, add_outsiders, add_insiders = calc_chance(result)
+        add_total, add_succ, add_fail = calc_chance(result)
         total += add_total
-        outsiders += add_outsiders
-        insiders += add_insiders
-    return total, outsiders, insiders  
+        succ += add_succ
+        fail += add_fail
+    return total, succ, fail
 
 
 def first_query(owner, repo):
@@ -120,6 +124,7 @@ def paginated_query(owner, repo, cursor):
         % (owner, repo, STEP_SIZE, cursor)
     }
     return gql_request(data)
+
 
 def gql_request(data):
     headers = {"Authorization": f"bearer {TOKEN}"}
