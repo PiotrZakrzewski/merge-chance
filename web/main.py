@@ -21,6 +21,8 @@ STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
 TTL = 24 * 60 * 60 # A day in seconds
 
+class GQLError(Exception):
+    pass
 
 @app.route("/", methods=["GET"])
 def index():
@@ -41,7 +43,10 @@ def target():
     else:
         log.info(f"Retrieving {target} from GH API")
         owner, repo = target.split("/")
-        _, succ, fail = get_stats(owner, repo)
+        try:
+            _, succ, fail = get_stats(owner, repo)
+        except GQLError:
+            return ("No such repository on GitHub / rate limited", 404)
         chance = succ / (fail + succ)
         chance = chance * 100
         chance = round(chance, 2)
@@ -167,4 +172,9 @@ def paginated_query(owner, repo, cursor):
 def gql_request(data):
     headers = {"Authorization": f"bearer {TOKEN}"}
     res = rq.post(GH_GQL_URL, headers=headers, json=data)
-    return res.json()
+    data = res.json()
+    if 'errors' in data:
+        errs = data['errors']
+        log.critical(f"Failed GQL query with {errs}")
+        raise GQLError()
+    return data
