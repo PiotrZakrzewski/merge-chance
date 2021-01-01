@@ -34,8 +34,11 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
   function handleTarget() {
-    const target = document.getElementById('target').value;
-    window.location.href = `/target?repo=${target}`
+    let target = document.getElementById('target').value;
+    if (target === "") {
+      target = "JuliaLang/Julia";
+    }
+    window.location.href = `/target?repo=${target}`;
   }
   $("#target").keyup((event) => {
     if (event.keyCode === 13) {
