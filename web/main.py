@@ -55,7 +55,10 @@ def target():
             _, succ, fail = get_stats(owner, repo)
         except GQLError:
             return ("No such repository on GitHub / rate limited", 404)
-        chance = succ / (fail + succ)
+        total = (fail + succ)
+        if total == 0:
+            return ("Not enough PRs in this repo ... go back and try smt else", 200)
+        chance = succ / total
         chance = chance * 100
         chance = round(chance, 2)
         cache(target, chance)
