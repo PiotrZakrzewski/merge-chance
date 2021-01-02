@@ -69,6 +69,8 @@ def target():
         print("You need to set GH_TOKEN env var")
         sys.exit(1)
     target = request.args.get("repo")
+    if not target:
+        return ("Invalid request", 400)
     target = target.lower()
     chance = _get_chance(target)
     if chance is None:
@@ -85,6 +87,8 @@ def badge():
         print("You need to set GH_TOKEN env var")
         sys.exit(1)
     target = request.args.get("repo")
+    if not target:
+        return ("Invalid request", 400)
     target = target.lower()
     chance = _get_chance(target)
     if chance is None:
