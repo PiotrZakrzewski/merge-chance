@@ -26,6 +26,14 @@ class GQLError(Exception):
     pass
 
 
+def strip_url(target):
+    exclude = 'github.com/'
+    if exclude in target:
+        pos = target.find(exclude) + len(exclude)
+        target = target[pos:]
+    return target
+
+
 @app.route("/autocomplete", methods=["GET"])
 def auto_complete():
     data = (
@@ -72,6 +80,7 @@ def target():
     if not target:
         return ("Invalid request", 400)
     target = target.lower()
+    target = strip_url(target)
     chance = _get_chance(target)
     if chance is None:
         return (
