@@ -31,6 +31,8 @@ def strip_url(target):
     if exclude in target:
         pos = target.find(exclude) + len(exclude)
         target = target[pos:]
+    if target[-1] == "/":
+        target = target[:-1]
     return target
 
 
