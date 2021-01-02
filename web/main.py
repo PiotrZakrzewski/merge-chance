@@ -8,10 +8,10 @@ from firebase_admin import credentials, firestore, initialize_app
 
 
 # Initialize Firestore DB
-cred = credentials.Certificate('key.json')
+cred = credentials.Certificate("key.json")
 default_app = initialize_app(cred)
 db = firestore.client()
-cache_ref = db.collection('cache')
+cache_ref = db.collection("cache")
 app = Flask(__name__)
 
 log = logging.getLogger(__name__)
@@ -19,14 +19,18 @@ log = logging.getLogger(__name__)
 TOKEN = os.getenv("GH_TOKEN")
 STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
-TTL = 24 * 60 * 60 # A day in seconds
+TTL = 24 * 60 * 60  # A day in seconds
+
 
 class GQLError(Exception):
     pass
 
+
 @app.route("/autocomplete", methods=["GET"])
 def auto_complete():
-    data = cache_ref.order_by('ts', direction=firestore.Query.DESCENDING).limit(500).get()
+    data = (
+        cache_ref.order_by("ts", direction=firestore.Query.DESCENDING).limit(500).get()
+    )
     repo_names = [repo.to_dict()["name"] for repo in data]
     return jsonify(repo_names)
 
@@ -36,15 +40,9 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/target", methods=["GET"])
-def target():
-    if not TOKEN:
-        print("You need to set GH_TOKEN env var")
-        sys.exit(1)
-    target = request.args.get("repo")
-    target = target.lower()
+def _get_chance(target):
     if not target or "/" not in target:
-        return ("No such repository on GitHub", 404)
+        return None
     chance = get_from_cache(target)
     if chance:
         log.info(f"Retrieved {target} from cache")
@@ -54,15 +52,49 @@ def target():
         try:
             _, succ, fail = get_stats(owner, repo)
         except GQLError:
-            return ("No such repository on GitHub / rate limited", 404)
-        total = (fail + succ)
+            return None
+        total = fail + succ
         if total == 0:
-            return ("Not enough PRs in this repo ... go back and try smt else", 200)
+            return None
         chance = succ / total
         chance = chance * 100
         chance = round(chance, 2)
         cache(target, chance)
+    return chance
+
+
+@app.route("/target", methods=["GET"])
+def target():
+    if not TOKEN:
+        print("You need to set GH_TOKEN env var")
+        sys.exit(1)
+    target = request.args.get("repo")
+    target = target.lower()
+    chance = _get_chance(target)
+    if chance is None:
+        return (
+            f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
+            404,
+        )
     return render_template("chance.html", chance=chance, repo=target)
+
+
+@app.route("/badge", methods=["GET"])
+def badge():
+    if not TOKEN:
+        print("You need to set GH_TOKEN env var")
+        sys.exit(1)
+    target = request.args.get("repo")
+    target = target.lower()
+    chance = _get_chance(target)
+    if chance is None:
+        return (
+            f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
+            404,
+        )
+    return jsonify(
+        {"schemaVersion": 1, "label": "Merge Chance", "message": f"{chance}%"}
+    )
 
 
 def escape_fb_key(repo_target):
@@ -74,7 +106,7 @@ def get_from_cache(repo):
     try:
         cached = cache_ref.document(repo).get().to_dict()
         if not cached:
-          return None
+            return None
         age = time.time() - cached["ts"]
         if age < TTL:
             return cached["chance"]
@@ -82,13 +114,15 @@ def get_from_cache(repo):
     except Exception as e:
         log.critical(f"An error occured ruing retrieving cache: {e}")
 
+
 def cache(repo, chance):
     escaped_repo = escape_fb_key(repo)
     try:
         ts = time.time()
-        cache_ref.document(escaped_repo).set({"chance": chance, "ts": ts, "name":repo})
+        cache_ref.document(escaped_repo).set({"chance": chance, "ts": ts, "name": repo})
     except Exception as e:
         log.critical(f"An error occured during caching: {e}")
+
 
 def calc_chance(stats):
     """Returns total_merged taken into account, outsiders_merged and insiders_merged."""
@@ -184,8 +218,8 @@ def gql_request(data):
     headers = {"Authorization": f"bearer {TOKEN}"}
     res = rq.post(GH_GQL_URL, headers=headers, json=data)
     data = res.json()
-    if 'errors' in data:
-        errs = data['errors']
+    if "errors" in data:
+        errs = data["errors"]
         log.critical(f"Failed GQL query with {errs}")
         raise GQLError()
     return data
