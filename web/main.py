@@ -82,6 +82,7 @@ def target():
     if not target:
         return ("Invalid request", 400)
     target = target.lower()
+    target = target.strip()
     target = strip_url(target)
     if target.count('/') != 1:
         return ("Invalid repo name. Must be in format: organization/name", 400)
