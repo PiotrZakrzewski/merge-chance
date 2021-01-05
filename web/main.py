@@ -160,9 +160,9 @@ def calc_chance(stats):
                 pass
             else:
                 continue
-        total += 1
         if author in {"OWNER", "MEMBER"}:
             continue
+        total += 1
         if state == "MERGED":
             out_s += 1
         else:
