@@ -5,7 +5,9 @@ import sys
 import logging
 import time
 from firebase_admin import credentials, firestore, initialize_app
+from dateutil import parser
 
+STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
 
 # Initialize Firestore DB
 cred = credentials.Certificate("key.json")
@@ -145,12 +147,19 @@ def cache(repo, chance):
 def calc_chance(stats):
     """Returns total_merged taken into account, outsiders_merged and insiders_merged."""
     total, out_s, out_f = 0, 0, 0
+    now = time.time()
     for edge in stats["data"]["repository"]["pullRequests"]["edges"]:
         node = edge["node"]
         author = node["authorAssociation"]
         state = node["state"]
+        created_at = node["createdAt"]
+        # parse to ts
+        created_at = parser.parse(created_at).timestamp()
         if state == "OPEN":
-            continue
+            if _is_stale(created_at, now):
+                pass
+            else:
+                continue
         total += 1
         if author in {"OWNER", "MEMBER"}:
             continue
@@ -160,6 +169,9 @@ def calc_chance(stats):
             out_f += 1
     return total, out_s, out_f
 
+
+def _is_stale(ts, now):
+    return (now - ts) > STALE_THRESHOLD
 
 def get_stats(owner, repo):
     result = first_query(owner, repo)
@@ -195,6 +207,7 @@ def first_query(owner, repo):
           node {
             state
             authorAssociation
+            createdAt
           }
         }
       }
@@ -221,6 +234,7 @@ def paginated_query(owner, repo, cursor):
           node {
             state
             authorAssociation
+            createdAt
           }
         }
       }
