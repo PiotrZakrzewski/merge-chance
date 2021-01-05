@@ -54,9 +54,9 @@ def index():
 
 def _get_chance(target):
     if not target or "/" not in target:
-        return None
-    chance = get_from_cache(target)
-    if chance:
+        return None, None
+    chance, total = get_from_cache(target)
+    if chance and total:
         log.info(f"Retrieved {target} from cache")
     else:
         log.info(f"Retrieving {target} from GH API")
@@ -64,15 +64,15 @@ def _get_chance(target):
         try:
             _, succ, fail = get_stats(owner, repo)
         except GQLError:
-            return None
+            return None, None
         total = fail + succ
         if total == 0:
-            return None
+            return None, None
         chance = succ / total
         chance = chance * 100
         chance = round(chance, 2)
-        cache(target, chance)
-    return chance
+        cache(target, chance, total)
+    return chance, total
 
 
 @app.route("/target", methods=["GET"])
@@ -88,13 +88,13 @@ def target():
     target = strip_url(target)
     if target.count('/') != 1:
         return ("Invalid repo name. Must be in format: organization/name", 400)
-    chance = _get_chance(target)
+    chance, total = _get_chance(target)
     if chance is None:
         return (
             f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
             404,
         )
-    return render_template("chance.html", chance=chance, repo=target)
+    return render_template("chance.html", chance=chance, repo=target, total=total)
 
 
 @app.route("/badge", methods=["GET"])
@@ -106,7 +106,7 @@ def badge():
     if not target:
         return ("Invalid request", 400)
     target = target.lower()
-    chance = _get_chance(target)
+    chance, _ = _get_chance(target)
     if chance is None:
         return (
             f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
@@ -126,20 +126,20 @@ def get_from_cache(repo):
     try:
         cached = cache_ref.document(repo).get().to_dict()
         if not cached:
-            return None
+            return None, None
         age = time.time() - cached["ts"]
         if age < TTL:
-            return cached["chance"]
-        return None
+            return cached.get("chance"), cached.get("total")
+        return None, None
     except Exception as e:
         log.critical(f"An error occured ruing retrieving cache: {e}")
 
 
-def cache(repo, chance):
+def cache(repo, chance, total):
     escaped_repo = escape_fb_key(repo)
     try:
         ts = time.time()
-        cache_ref.document(escaped_repo).set({"chance": chance, "ts": ts, "name": repo})
+        cache_ref.document(escaped_repo).set({"chance": chance, "ts": ts, "name": repo, "total": total})
     except Exception as e:
         log.critical(f"An error occured during caching: {e}")
 
