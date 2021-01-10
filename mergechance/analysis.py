@@ -13,7 +13,14 @@ def median_time_to_merge(prs: list) -> float:
     closings = [_to_ts(pr["closedAt"]) - _to_ts(pr["createdAt"]) for pr in prs ]
     median_seconds = statistics.median(closings)
     median_days = median_seconds / 60 / 60 / 24
+    median_days = round(median_days, 2)
     return median_days
+
+
+def get_median_outsider_time(prs: list) -> float:
+    outsiders_prs = get_outsiders(prs)
+    closed = [pr for pr in outsiders_prs if pr['state'] in {'MERGED', 'CLOSED'}]
+    return median_time_to_merge(closed)
 
 
 def merge_chance(prs: list) -> tuple:

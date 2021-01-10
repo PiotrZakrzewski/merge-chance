@@ -3,7 +3,7 @@ import logging
 
 from mergechance.db import autocomplete_list, get_from_cache, cache
 from mergechance.gh_gql import get_pr_fields, GQLError
-from mergechance.analysis import ANALYSIS_FIELDS, merge_chance
+from mergechance.analysis import ANALYSIS_FIELDS, merge_chance, get_median_outsider_time
 
 app = Flask(__name__)
 log = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def _strip_url(target):
 def _get_chance(target):
     cached_chance = get_from_cache(target)
     if cached_chance:
-        chance, total = cached_chance
+        chance, median, total = cached_chance
         log.info(f"Retrieved {target} from cache")
     else:
         log.info(f"Retrieving {target} from GH API")
@@ -49,8 +49,9 @@ def _get_chance(target):
         if not chance:
             return None
         chance, total = chance
-        cache(target, chance, total)
-    return chance, total
+        median = get_median_outsider_time(prs)
+        cache(target, chance, median, total)
+    return chance, median, total
 
 
 @app.route("/autocomplete", methods=["GET"])
@@ -77,8 +78,8 @@ def target():
             f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
             404,
         )
-    chance, total = chance
-    return render_template("chance.html", chance=chance, repo=target, total=total)
+    chance, median, total = chance
+    return render_template("chance.html", chance=chance, repo=target, total=total, median=median)
 
 
 @app.route("/badge", methods=["GET"])
@@ -94,7 +95,7 @@ def badge():
             f"Could not calculate merge chance for this repo. It might not exist on GitHub or have zero PRs.",
             404,
         )
-    chance, _ = chance
+    chance, median, _ = chance
     return jsonify(
-        {"schemaVersion": 1, "label": "Merge Chance", "message": f"{chance}%"}
+        {"schemaVersion": 1, "label": "Merge Chance", "message": f"{chance}% after {median} days"}
     )

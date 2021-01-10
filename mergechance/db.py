@@ -34,20 +34,23 @@ def get_from_cache(repo):
         cached = cache_ref.document(repo).get().to_dict()
         if not cached:
             return None
+        median = cached.get("median")
+        if not median:
+            return None
         age = time.time() - cached["ts"]
         if age < TTL:
-            return cached.get("chance"), cached.get("total")
+            return cached.get("chance"), median, cached.get("total")
         return None
     except Exception as e:
         log.critical(f"An error occured ruing retrieving cache: {e}")
 
 
-def cache(repo, chance, total):
+def cache(repo, chance, median, total):
     escaped_repo = escape_fb_key(repo)
     try:
         ts = time.time()
         cache_ref.document(escaped_repo).set(
-            {"chance": chance, "ts": ts, "name": repo, "total": total}
+            {"chance": chance, "ts": ts, "name": repo, "total": total, "median": median}
         )
     except Exception as e:
         log.critical(f"An error occured during caching: {e}")
