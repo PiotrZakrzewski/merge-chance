@@ -1,6 +1,7 @@
 """Module for calculating stats from data provided by gh_gql.py"""
 from dateutil import parser
 import time
+import statistics
 
 
 STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
@@ -9,7 +10,10 @@ ANALYSIS_FIELDS = ["closedAt", "createdAt", "authorAssociation", "state"]
 
 
 def median_time_to_merge(prs: list) -> float:
-    pass
+    closings = [_to_ts(pr["closedAt"]) - _to_ts(pr["createdAt"]) for pr in prs ]
+    median_seconds = statistics.median(closings)
+    median_days = median_seconds / 60 / 60 / 24
+    return median_days
 
 
 def merge_chance(prs: list) -> tuple:
@@ -56,5 +60,9 @@ def _is_stale(pr, now):
     if pr["state"] != "OPEN":
         return False
     ts = pr["createdAt"]
-    ts = parser.parse(ts).timestamp()
+    ts = _to_ts(ts)
     return (now - ts) > STALE_THRESHOLD
+
+
+def _to_ts(ts_iso):
+    return parser.parse(ts_iso).timestamp()

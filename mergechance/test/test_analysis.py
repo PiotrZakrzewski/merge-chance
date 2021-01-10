@@ -4,6 +4,7 @@ from mergechance.analysis import (
     get_stale,
     get_open,
     merge_chance,
+    median_time_to_merge
 )
 
 import datetime
@@ -123,6 +124,42 @@ def prs(
         pr_open_insider_stale,
     ]
 
+@pytest.fixture()
+def pr_merged_1day():
+    delta = datetime.timedelta(days=1)
+    now =datetime.datetime.now()
+    time_ago = now - delta
+    return {
+        "createdAt": time_ago.isoformat(),
+        "closedAt": now.isoformat(),
+        "authorAssociation": None,
+        "state": "MERGED",
+    }
+
+@pytest.fixture()
+def pr_merged_2day():
+    delta = datetime.timedelta(days=2)
+    now =datetime.datetime.now()
+    time_ago = now - delta
+    return {
+        "createdAt": time_ago.isoformat(),
+        "closedAt": now.isoformat(),
+        "authorAssociation": None,
+        "state": "MERGED",
+    }
+
+@pytest.fixture()
+def pr_merged_3day():
+    delta = datetime.timedelta(days=3)
+    now =datetime.datetime.now()
+    time_ago = now - delta
+    return {
+        "createdAt": time_ago.isoformat(),
+        "closedAt": now.isoformat(),
+        "authorAssociation": None,
+        "state": "MERGED",
+    }
+
 
 def test_get_merged(prs):
     merged = get_merged(prs)
@@ -151,9 +188,19 @@ def test_get_outsiders(prs):
 def test_merge_chance(prs):
     chance, total = merge_chance(prs)
     assert total == 3
-    assert pytest.approx(chance, 0.1) == 0.33
+    assert pytest.approx(chance, 0.1) == 33.3
 
 
 def test_merge_chance_empty():
     res = merge_chance([])
     assert res is None
+
+
+def test_median_time(pr_merged_1day, pr_merged_2day, pr_merged_3day):
+    prs = [pr_merged_1day, pr_merged_1day, pr_merged_1day]
+    med_t = median_time_to_merge(prs)
+    assert pytest.approx(med_t, 0.1) == 1.0
+
+    prs = [pr_merged_1day, pr_merged_2day, pr_merged_3day]
+    med_t = median_time_to_merge(prs)
+    assert pytest.approx(med_t, 0.1) == 2.0
