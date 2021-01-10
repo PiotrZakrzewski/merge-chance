@@ -9,7 +9,7 @@ TTL = 24 * 60 * 60  # A day in seconds
 cred = credentials.Certificate("key.json")
 default_app = initialize_app(cred)
 db = firestore.client()
-cache_ref = db.collection("test_cache")
+cache_ref = db.collection("cache")
 
 log = logging.getLogger(__name__)
 
