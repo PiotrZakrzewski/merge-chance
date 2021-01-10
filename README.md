@@ -1,31 +1,23 @@
-# How Likely Is Your OSS Contribution to Succeed
+# merge-chance.info code
+This is repo for the [merge-chance](https://merge-chance.info), page where you can checks success rate for your favorite open-source project on GitHub.
 
-__Check Merge Chance for a public GitHub Repo [here](https://merge-chance.info)__
+## Build & Setup
 
-Or use `get_pr_gql.py` script from this repo for more control and data.
+You will need a GitHub token, in order to extract data from GitHub [instructions](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token).
 
-Requires python 3.6+
-Prepare a venv
+First setup a google cloud project and set following env vars:
 ```shell
-python -m venv .env
-source .env/bin/activate
-pip install -r requirements.txt
+export GCP_PROJECT=YOUR_PROJECT
+export GCP_REGION=DESIRED_REGION
+export GH_TOKEN=YOUR_GITHUB_TOKEN
 ```
-You will need a GitHub token, [instructions](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token).
-
-run the script
+Then create a service account with admin rights to your project's firestore. Save the json key to this service account as `key.json` in current dir.
+Run the app locally with 
 ```shell
-GH_TOKEN=YOUR_GH_TOKEN python get_pr_gql.py ORG/REPO
+ gunicorn --bind :8080 --workers 1 --threads 8 --timeout 0 mergechance.main:app
 ```
-Make a score plot
+in order to deploy it as a Cloud Run service on your GCP project run 
 ```shell
-python score.py org_repo.csv
+./build.sh
 ```
-or if you want to plot only outsider contributions (author affiliation other than MEMBER or OWNER) do:
-```shell
-python score.py org_repo.csv --outsiders
-```
-## What is in the other directories?
-- `web` merge-chance.info code
-- `exploration` contains a simple analysis of one repository
-- `gh-rest-api` contains my old script for fetching the same data with REST-api (slooow)
+This will build the container with Cloud Build and deploy it.
