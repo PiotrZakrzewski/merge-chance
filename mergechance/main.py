@@ -16,6 +16,9 @@ def sanitize_repo(target: str):
     target = target.lower()
     target = target.strip()
     target = _strip_url(target)
+    # sometimes people copy paste from GitHub UI, which adds spaces in between
+    # those can be safely removed, spaces are not allowed in GitHub repo names
+    target = target.replace(" ", "")
     if target.count("/") != 1:
         raise ValueError("Invalid repo name. Must be in format: organization/name")
     return target
