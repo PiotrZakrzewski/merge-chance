@@ -11,7 +11,7 @@ STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
 
 
-def get_pr_fields(org:str, repo:str, fields:List[str], page_cap=3) -> List[dict]:
+def get_pr_fields(org: str, repo: str, fields: List[str], page_cap=3) -> List[dict]:
     result = _first_query(org, repo, fields)
     rows = _to_rows(result)
     page_info = result["data"]["repository"]["pullRequests"]["pageInfo"]
@@ -24,21 +24,18 @@ def get_pr_fields(org:str, repo:str, fields:List[str], page_cap=3) -> List[dict]
         page_info = result["data"]["repository"]["pullRequests"]["pageInfo"]
         has_next = page_info["hasPreviousPage"]
         cursor = page_info["startCursor"]
-        page_cap += 1
+        pages += 1
     return rows
 
 
-def _to_rows(result:dict):
+def _to_rows(result: dict):
     rows = []
     for edge in result["data"]["repository"]["pullRequests"]["edges"]:
         rows.append(edge["node"])
     return rows
 
-# state
-# authorAssociation
-# createdAt
-# closedAt
-def _first_query(org:str, repo:str, fields:List[str]):
+
+def _first_query(org: str, repo: str, fields: List[str]):
     fields = "\n".join(fields)
     data = {
         "query": """

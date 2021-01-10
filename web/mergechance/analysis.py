@@ -25,6 +25,8 @@ def merge_chance(prs: list) -> tuple:
     if not total:
         return None
     chance = len(merged) / total
+    chance *= 100
+    chance = round(chance, 2)
     return chance, total
 
 
