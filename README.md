@@ -16,6 +16,10 @@ Run the app locally with
 ```shell
  gunicorn --bind :8080 --workers 1 --threads 8 --timeout 0 mergechance.main:app
 ```
+Before first deploy to GCP run
+```shell
+./first_config.sh
+```
 in order to deploy it as a Cloud Run service on your GCP project run 
 ```shell
 ./build.sh
