@@ -53,6 +53,8 @@ def _get_chance(target):
             return None
         chance, total = chance
         median = get_median_outsider_time(prs)
+        if not median:
+            return None
         cache(target, chance, median, total)
     return chance, median, total
 

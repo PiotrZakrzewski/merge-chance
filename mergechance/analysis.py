@@ -18,8 +18,14 @@ def median_time_to_merge(prs: list) -> float:
 
 
 def get_median_outsider_time(prs: list) -> float:
+    """Return median closing time for closed PRs.
+
+    Will return None if there are no closed prs in the input.
+    """
     outsiders_prs = get_outsiders(prs)
     closed = [pr for pr in outsiders_prs if pr['state'] in {'MERGED', 'CLOSED'}]
+    if not closed:
+        return None
     return median_time_to_merge(closed)
 
 
