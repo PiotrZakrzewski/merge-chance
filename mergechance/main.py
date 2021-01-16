@@ -46,14 +46,15 @@ def _get_chance(target):
         owner, repo = target.split("/")
         try:
             prs = []
+            unfiltered_prs = []
             cursor = None
             reqs = 0
             while len(prs) < 50 and reqs < 10:
                 batch, cursor = get_pr_fields(owner, repo, ANALYSIS_FIELDS, page_cap=1, cursor=cursor)
-                prs.extend(batch)
+                unfiltered_prs.extend(batch)
                 # because of implied insider calculation it is important to recalculate
                 # on the entire dataset, as it might uncover more information about implied insiders
-                prs = get_viable_prs(prs)
+                prs = get_viable_prs(unfiltered_prs)
                 reqs += 1
         except GQLError:
             return None
