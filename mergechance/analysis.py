@@ -74,6 +74,9 @@ def get_open(prs: list) -> list:
 def get_outsiders(prs: list) -> list:
     implied_insiders = get_implied_insiders(prs)
     def _outsider_pr(pr):
+        if pr['author'] is None:
+            # author's GH user removed?
+            return _is_outsider(pr["authorAssociation"])
         return _is_outsider(pr["authorAssociation"]) and pr['author']['login'] not in implied_insiders
     return [pr for pr in prs if  _outsider_pr(pr)]
 
