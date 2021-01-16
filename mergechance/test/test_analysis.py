@@ -212,7 +212,7 @@ def test_get_outsiders(prs):
 
 def test_merge_chance(prs):
     chance, total = merge_chance(prs)
-    assert total == 3
+    assert total == 6
     assert pytest.approx(chance, 0.1) == 33.3
 
 

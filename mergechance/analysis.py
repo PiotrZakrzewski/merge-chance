@@ -19,6 +19,13 @@ def median_time_to_merge(prs: list) -> float:
     return median_days
 
 
+def get_viable_prs(prs):
+    """return only outsider PRs that MERGED, CLOSED or stale."""
+    outsiders = get_outsiders(prs)
+    now = time.time()
+    return [pr for pr in outsiders if _is_handled(pr) or _is_stale(pr, now)]
+
+
 def get_implied_insiders(prs: list):
     """Some repositories don't add contributors to their org members.
 
@@ -28,23 +35,21 @@ def get_implied_insiders(prs: list):
     logins = [pr['author']['login'] for pr in prs if pr['state'] == 'MERGED']
     return {login for login in logins if logins.count(login) > INSIDER_PR_THRESHOLD }
 
-def get_median_outsider_time(prs: list) -> float:
+def get_median_outsider_time(outsiders_prs: list) -> float:
     """Return median closing time for closed PRs.
 
     Will return None if there are no closed prs in the input.
     """
-    outsiders_prs = get_outsiders(prs)
     closed = [pr for pr in outsiders_prs if pr['state'] in {'MERGED', 'CLOSED'}]
     if not closed:
         return None
     return median_time_to_merge(closed)
 
 
-def merge_chance(prs: list) -> tuple:
+def merge_chance(outsiders_prs: list) -> tuple:
     """Return a tuple of proportion of successful PRs and the amount of
     prs that were taken into consideration among those from the input.
     Open and not stale PRs are not valid and are ignored."""
-    outsiders_prs = get_outsiders(prs)
     merged = get_merged(outsiders_prs)
     open = get_open(outsiders_prs)
     stale = get_stale(open)
@@ -67,7 +72,10 @@ def get_open(prs: list) -> list:
 
 
 def get_outsiders(prs: list) -> list:
-    return [pr for pr in prs if _is_outsider(pr["authorAssociation"])]
+    implied_insiders = get_implied_insiders(prs)
+    def _outsider_pr(pr):
+        return _is_outsider(pr["authorAssociation"]) and pr['author']['login'] not in implied_insiders
+    return [pr for pr in prs if  _outsider_pr(pr)]
 
 
 def get_stale(prs: list) -> list:
@@ -86,6 +94,11 @@ def _is_stale(pr, now):
     ts = pr["createdAt"]
     ts = _to_ts(ts)
     return (now - ts) > STALE_THRESHOLD
+
+
+def _is_handled(pr):
+    """A PR is considered handled when it is CLOSED or MERGED."""
+    return pr['state'] in {'MERGED', 'CLOSED'}
 
 
 def _to_ts(ts_iso):
