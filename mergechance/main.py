@@ -3,7 +3,7 @@ import logging
 
 from mergechance.db import autocomplete_list, get_from_cache, cache
 from mergechance.gh_gql import get_pr_fields, GQLError
-from mergechance.analysis import ANALYSIS_FIELDS, merge_chance, get_median_outsider_time
+from mergechance.analysis import ANALYSIS_FIELDS, get_viable_prs, merge_chance, get_median_outsider_time
 
 app = Flask(__name__)
 log = logging.getLogger(__name__)
@@ -45,7 +45,16 @@ def _get_chance(target):
         # after sanitize_repo it is guaranteed to contain exactly one '/'
         owner, repo = target.split("/")
         try:
-            prs = get_pr_fields(owner, repo, ANALYSIS_FIELDS)
+            prs = []
+            cursor = None
+            reqs = 0
+            while len(prs) < 50 and reqs < 10:
+                batch, cursor = get_pr_fields(owner, repo, ANALYSIS_FIELDS, page_cap=1, cursor=cursor)
+                prs.extend(batch)
+                # because of implied insider calculation it is important to recalculate
+                # on the entire dataset, as it might uncover more information about implied insiders
+                prs = get_viable_prs(prs)
+                reqs += 1
         except GQLError:
             return None
         chance = merge_chance(prs)
