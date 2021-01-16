@@ -4,7 +4,8 @@ from mergechance.analysis import (
     get_stale,
     get_open,
     merge_chance,
-    median_time_to_merge
+    median_time_to_merge,
+    get_implied_insiders
 )
 
 import datetime
@@ -20,6 +21,9 @@ def pr_open_outsider():
         "closedAt": None,
         "authorAssociation": None,
         "state": "OPEN",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -31,6 +35,9 @@ def pr_closed_outsider():
         "closedAt": now,
         "authorAssociation": None,
         "state": "CLOSED",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -42,6 +49,9 @@ def pr_merged_outsider():
         "closedAt": now,
         "authorAssociation": None,
         "state": "MERGED",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -54,6 +64,9 @@ def pr_open_outsider_stale():
         "closedAt": None,
         "authorAssociation": None,
         "state": "OPEN",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -65,6 +78,9 @@ def pr_open_insider():
         "closedAt": None,
         "authorAssociation": "MEMBER",
         "state": "OPEN",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -76,6 +92,9 @@ def pr_closed_insider():
         "closedAt": now,
         "authorAssociation": "MEMBER",
         "state": "CLOSED",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -87,6 +106,9 @@ def pr_merged_insider():
         "closedAt": now,
         "authorAssociation": "MEMBER",
         "state": "MERGED",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -99,6 +121,9 @@ def pr_open_insider_stale():
         "closedAt": None,
         "authorAssociation": "MEMBER",
         "state": "OPEN",
+        "author": {
+            "login": "author1"
+        }
     }
 
 
@@ -204,3 +229,9 @@ def test_median_time(pr_merged_1day, pr_merged_2day, pr_merged_3day):
     prs = [pr_merged_1day, pr_merged_2day, pr_merged_3day]
     med_t = median_time_to_merge(prs)
     assert pytest.approx(med_t, 0.1) == 2.0
+
+
+def test_implied_insider(pr_merged_outsider):
+    prs = [pr_merged_outsider] * 6
+    implied = get_implied_insiders(prs)
+    assert {'author1'} == implied

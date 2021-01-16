@@ -8,6 +8,8 @@ STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
 
 ANALYSIS_FIELDS = ["closedAt", "createdAt", "authorAssociation", "state"]
 
+# PRs a nominal outsider must merge to become an insider
+INSIDER_PR_THRESHOLD = 5
 
 def median_time_to_merge(prs: list) -> float:
     closings = [_to_ts(pr["closedAt"]) - _to_ts(pr["createdAt"]) for pr in prs ]
@@ -16,6 +18,15 @@ def median_time_to_merge(prs: list) -> float:
     median_days = round(median_days, 2)
     return median_days
 
+
+def get_implied_insiders(prs: list):
+    """Some repositories don't add contributors to their org members.
+
+    Returns a list of author logins that successfully merged to
+    the repo many times, they will be assumed to be insiders.
+    """
+    logins = [pr['author']['login'] for pr in prs if pr['state'] == 'MERGED']
+    return {login for login in logins if logins.count(login) > INSIDER_PR_THRESHOLD }
 
 def get_median_outsider_time(prs: list) -> float:
     """Return median closing time for closed PRs.
