@@ -11,13 +11,18 @@ STEP_SIZE = 100  # 100 is Max
 GH_GQL_URL = "https://api.github.com/graphql"
 
 
-def get_pr_fields(org: str, repo: str, fields: List[str], page_cap=3) -> List[dict]:
-    result = _first_query(org, repo, fields)
-    rows = _to_rows(result)
-    page_info = result["data"]["repository"]["pullRequests"]["pageInfo"]
-    has_next = page_info["hasPreviousPage"]
-    cursor = page_info["startCursor"]
-    pages = 1
+def get_pr_fields(org: str, repo: str, fields: List[str], page_cap=1, cursor=None) -> tuple:
+    """Get specified GitHub PR fields.
+
+    org - GitHub organization/users
+    repo - GitHub repository
+    fields - list of PR edge fields (See GitHub GraphQL docs)
+    page_cap - how many pages (each 100 records) to fetch
+    start_at - graphQl cursor to resume previous query
+    """
+    pages = 0
+    has_next = True
+    rows = []
     while has_next and pages < page_cap:
         result = _paginated_query(org, repo, cursor, fields)
         rows.extend(_to_rows(result))
@@ -25,7 +30,7 @@ def get_pr_fields(org: str, repo: str, fields: List[str], page_cap=3) -> List[di
         has_next = page_info["hasPreviousPage"]
         cursor = page_info["startCursor"]
         pages += 1
-    return rows
+    return rows, cursor
 
 
 def _to_rows(result: dict):
@@ -35,38 +40,14 @@ def _to_rows(result: dict):
     return rows
 
 
-def _first_query(org: str, repo: str, fields: List[str]):
-    fields = "\n".join(fields)
-    data = {
-        "query": """
-  query {
-    repository(owner:"%s", name:"%s") {
-      pullRequests(last: %s) {
-        pageInfo {
-          hasPreviousPage
-          startCursor
-        }
-        edges {
-          node {
-            %s
-          }
-        }
-      }
-    }
-  }
-  """
-        % (org, repo, STEP_SIZE, fields)
-    }
-    return _gql_request(data)
-
-
 def _paginated_query(owner, repo, cursor, fields):
     fields = "\n".join(fields)
+    cursor_part = f'", before: "{cursor}"' if cursor else ""
     data = {
         "query": """
   query {
     repository(owner:"%s", name:"%s") {
-      pullRequests(last: %s, before: "%s") {
+      pullRequests(last: %s %s) {
         pageInfo {
           hasPreviousPage
           startCursor
@@ -74,6 +55,9 @@ def _paginated_query(owner, repo, cursor, fields):
         edges {
           cursor
           node {
+            author {
+              login
+            }
             %s
           }
         }
@@ -81,7 +65,7 @@ def _paginated_query(owner, repo, cursor, fields):
     }
   }
   """
-        % (owner, repo, STEP_SIZE, cursor, fields)
+        % (owner, repo, STEP_SIZE, cursor_part, fields)
     }
     return _gql_request(data)
 
