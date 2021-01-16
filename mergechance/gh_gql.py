@@ -42,7 +42,7 @@ def _to_rows(result: dict):
 
 def _paginated_query(owner, repo, cursor, fields):
     fields = "\n".join(fields)
-    cursor_part = f'", before: "{cursor}"' if cursor else ""
+    cursor_part = f', before: "{cursor}"' if cursor else ""
     data = {
         "query": """
   query {
