@@ -1,9 +1,12 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, send_file
 import logging
+import os
+from tempfile import TemporaryDirectory
 
 from mergechance.db import autocomplete_list, get_from_cache, cache
 from mergechance.gh_gql import get_pr_fields, GQLError
 from mergechance.analysis import ANALYSIS_FIELDS, get_viable_prs, merge_chance, get_median_outsider_time
+from mergechance.data_export import prep_tsv
 
 app = Flask(__name__)
 log = logging.getLogger(__name__)
@@ -38,7 +41,7 @@ def _strip_url(target):
 def _get_chance(target):
     cached_chance = get_from_cache(target)
     if cached_chance:
-        chance, median, total = cached_chance
+        chance, median, total, _ = cached_chance
         log.info(f"Retrieved {target} from cache")
     else:
         log.info(f"Retrieving {target} from GH API")
@@ -65,7 +68,7 @@ def _get_chance(target):
         median = get_median_outsider_time(prs)
         if not median:
             return None
-        cache(target, chance, median, total)
+        cache(target, chance, median, total, prs)
     return chance, median, total
 
 
@@ -114,3 +117,24 @@ def badge():
     return jsonify(
         {"schemaVersion": 1, "label": "Merge Chance", "message": f"{chance}% after {median} days"}
     )
+
+
+@app.route("/data", methods=["GET"])
+def download_data():
+    target = request.args.get("repo")
+    try:
+        target = sanitize_repo(target)
+    except ValueError:
+        return ("Invalid repo name. Must be in format 'owner/name'.", 400)
+    data = get_from_cache(target)
+    if not data:
+        return ("Repo not found", 404)
+    _, _, _, prs = data
+    if not prs:
+        return ("No data for this repo", 404)
+    content = prep_tsv(prs)
+    with TemporaryDirectory() as tdir:
+        full_path = os.path.join(tdir, "prs.tsv")
+        with open(full_path, "w") as tsv:
+            tsv.write(content)
+        return send_file(full_path, attachment_filename=f"{target}.tsv", as_attachment=True)

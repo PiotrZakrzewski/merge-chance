@@ -7,7 +7,7 @@ from mergechance.blacklist import blacklist
 
 STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
 
-ANALYSIS_FIELDS = ["closedAt", "createdAt", "authorAssociation", "state"]
+ANALYSIS_FIELDS = ["closedAt", "createdAt", "authorAssociation", "state", "permalink", "title"]
 
 # PRs a nominal outsider must merge to become an insider
 INSIDER_PR_THRESHOLD = 5
