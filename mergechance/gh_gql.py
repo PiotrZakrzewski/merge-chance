@@ -55,6 +55,17 @@ def _paginated_query(owner, repo, cursor, fields):
         edges {
           cursor
           node {
+            timelineItems(last: 1 , itemTypes: CLOSED_EVENT) {
+              edges {
+                node {
+                  ... on ClosedEvent {
+                    actor{
+                      login
+                    }
+                  }
+                }
+              }
+            }
             author {
               login
             }

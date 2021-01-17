@@ -24,6 +24,7 @@ def filter_prs(prs):
     """Rules based pr filtering for spam, bots etc."""
     prs = [pr for pr in prs if not  _is_trivial(pr)]
     prs = [pr for pr in prs if not _is_blacklisted(pr)]
+    prs = [pr for pr in prs if not _is_closed_by_author(pr)]
     return prs
 
 
@@ -130,6 +131,29 @@ def _is_trivial(pr):
     if title == 'test':
         return True
     return False
+
+
+def _is_closed_by_author(pr):
+    """If the author closed the PR themselves we ignore it."""
+    if not pr['author']:
+        return False
+    if pr['state'] != 'CLOSED':
+        return False
+    timeline = pr.get('timelineItems')
+    if not timeline:
+        return False
+    open_login = pr['author'].get('login')
+    events = timeline.get('edges', [])
+    for event in events:
+        node = event['node']
+        actor = node.get('actor')
+        if not actor:
+            return False
+        closed_login = actor.get('login')
+        if closed_login == open_login:
+            return True
+    return False
+
 
 
 def _to_ts(ts_iso):
