@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 
 from mergechance.db import autocomplete_list, get_from_cache, cache
 from mergechance.gh_gql import get_pr_fields, GQLError
-from mergechance.analysis import ANALYSIS_FIELDS, get_viable_prs, merge_chance, get_median_outsider_time
+from mergechance.analysis import ANALYSIS_FIELDS, get_viable_prs, merge_chance, get_median_outsider_time, filter_prs
 from mergechance.data_export import prep_tsv
 
 app = Flask(__name__)
@@ -49,15 +49,16 @@ def _get_chance(target):
         owner, repo = target.split("/")
         try:
             prs = []
-            unfiltered_prs = []
+            all_prs = []
             cursor = None
             reqs = 0
             while len(prs) < 50 and reqs < 10:
                 batch, cursor = get_pr_fields(owner, repo, ANALYSIS_FIELDS, page_cap=1, cursor=cursor)
-                unfiltered_prs.extend(batch)
+                batch = filter_prs(batch)
+                all_prs.extend(batch)
                 # because of implied insider calculation it is important to recalculate
                 # on the entire dataset, as it might uncover more information about implied insiders
-                prs = get_viable_prs(unfiltered_prs)
+                prs = get_viable_prs(all_prs)
                 reqs += 1
         except GQLError:
             return None

@@ -20,9 +20,15 @@ def median_time_to_merge(prs: list) -> float:
     return median_days
 
 
+def filter_prs(prs):
+    """Rules based pr filtering for spam, bots etc."""
+    prs = [pr for pr in prs if not  _is_trivial(pr)]
+    prs = [pr for pr in prs if not _is_blacklisted(pr)]
+    return prs
+
+
 def get_viable_prs(prs):
     """return only outsider PRs that MERGED, CLOSED or stale, ignore the blacklisted."""
-    prs = [pr for pr in prs if not _is_blacklisted(pr)]
     outsiders = get_outsiders(prs)
     now = time.time()
     return [pr for pr in outsiders if _is_handled(pr) or _is_stale(pr, now)]
@@ -110,6 +116,20 @@ def _is_blacklisted(pr):
     if not pr['author']:
         return False
     return pr['author']['login'] in blacklist
+
+
+banned_keywords = ["readme", "update", "typo"]
+
+def _is_trivial(pr):
+    """Poor man's spam detection - based on title only for now."""
+    title = pr.get('title', '')
+    title = title.lower()
+    for banned in banned_keywords:
+        if banned in title:
+            return True
+    if title == 'test':
+        return True
+    return False
 
 
 def _to_ts(ts_iso):
