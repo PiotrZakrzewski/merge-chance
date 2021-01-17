@@ -2,6 +2,7 @@
 from dateutil import parser
 import time
 import statistics
+from mergechance.blacklist import blacklist
 
 
 STALE_THRESHOLD = 90 * 24 * 60 * 60  # 90 days in seconds
@@ -20,7 +21,8 @@ def median_time_to_merge(prs: list) -> float:
 
 
 def get_viable_prs(prs):
-    """return only outsider PRs that MERGED, CLOSED or stale."""
+    """return only outsider PRs that MERGED, CLOSED or stale, ignore the blacklisted."""
+    prs = [pr for pr in prs if not _is_blacklisted(pr)]
     outsiders = get_outsiders(prs)
     now = time.time()
     return [pr for pr in outsiders if _is_handled(pr) or _is_stale(pr, now)]
@@ -102,6 +104,12 @@ def _is_stale(pr, now):
 def _is_handled(pr):
     """A PR is considered handled when it is CLOSED or MERGED."""
     return pr['state'] in {'MERGED', 'CLOSED'}
+
+
+def _is_blacklisted(pr):
+    if not pr['author']:
+        return False
+    return pr['author']['login'] in blacklist
 
 
 def _to_ts(ts_iso):
