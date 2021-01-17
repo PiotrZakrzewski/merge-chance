@@ -28,7 +28,7 @@ def filter_prs(prs):
 
 
 def get_viable_prs(prs):
-    """return only outsider PRs that MERGED, CLOSED or stale, ignore the blacklisted."""
+    """return only outsider PRs that MERGED, CLOSED or stale."""
     outsiders = get_outsiders(prs)
     now = time.time()
     return [pr for pr in outsiders if _is_handled(pr) or _is_stale(pr, now)]
