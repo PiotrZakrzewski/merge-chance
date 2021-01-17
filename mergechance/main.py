@@ -138,4 +138,4 @@ def download_data():
         full_path = os.path.join(tdir, "prs.tsv")
         with open(full_path, "w") as tsv:
             tsv.write(content)
-        return send_file(full_path, attachment_filename=f"{target}.tsv", as_attachment=True)
+        return send_file(full_path, attachment_filename=f"{target}.tsv", as_attachment=True, cache_timeout=-600)
